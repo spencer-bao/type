@@ -18,7 +18,7 @@ def type(text):
     type_map = State()
     for statement in statement_list:
 		if isinstance(statement, AssignStatement):
-			type_map.put(str(statement.identifier), "undef")
+			type_map.put(str(statement.identifier), "")
     
     body = BlockStatement(statement_list)
 
@@ -130,6 +130,15 @@ class AssignStatement( Statement ):
 		state.put(str(self.identifier), self.expr.val(state))
 		return state
 
+    def tipe(self, type_map):
+        expr_type = self.expr.tipe()
+        if expr_type == "":
+            NameError("Variable undefined!")
+        if self.identifier is not in type_map:
+            type_map[self.identifier] = expr_type
+        elif type_map[self.identifier] != expr_type:
+            TypeError("Type mismatch!")
+
 class BlockStatement( Statement ):
 	def __init__(self, stmtList):
 		self.stmtList = stmtList
@@ -201,6 +210,9 @@ class Number( Expression ):
 
 	def val(self, state):
 		return self.value
+    
+    def tipe(self):
+        return "number"
 
 class String( Expression ):
 	def __init__(self, string):
