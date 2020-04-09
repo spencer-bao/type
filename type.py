@@ -11,18 +11,18 @@ statement_list = []
 
 
 def type(text):
-    global tokens
+	global tokens
 	tokens = Lexer( text )
 	statement_list = parseStmtList( tokens )
 
-    type_map = State()
-    for statement in statement_list:
+	type_map = State()
+	for statement in statement_list:
 		if isinstance(statement, AssignStatement):
 			type_map.put(str(statement.identifier), "")
     
-    body = BlockStatement(statement_list)
+	body = BlockStatement(statement_list)
 
-    for stmt in body.stmtList:
+	for stmt in body.stmtList:
 		if (isinstance(stmt, AssignStatement) or isinstance(stmt, WhileStatement) or
 			isinstance(stmt, IfStatement) or isinstance(stmt, BlockStatement)):
 			stmt.tipe(type_map)
@@ -98,8 +98,8 @@ class WhileStatement( Statement ): #statement subclasses they create the string 
 			self.block.meaning(state)
 		return state
 
-    def tipe(self, type_map):
-
+	def tipe(self, type_map):
+		pass
 
 class IfStatement( Statement ):
 	def __init__(self, expr, if_block, else_block):
@@ -130,14 +130,14 @@ class AssignStatement( Statement ):
 		state.put(str(self.identifier), self.expr.val(state))
 		return state
 
-    def tipe(self, type_map):
-        expr_type = self.expr.tipe()
-        if expr_type == "":
-            NameError("Variable undefined!")
-        if self.identifier is not in type_map:
-            type_map[self.identifier] = expr_type
-        elif type_map[self.identifier] != expr_type:
-            TypeError("Type mismatch!")
+	def tipe(self, type_map):
+		expr_type = self.expr.tipe()
+		if expr_type == "":
+			NameError("Variable undefined!")
+		if self.identifier not in type_map:
+			type_map[self.identifier] = expr_type
+		elif type_map[self.identifier] != expr_type:
+			TypeError("Type mismatch!")
 
 class BlockStatement( Statement ):
 	def __init__(self, stmtList):
@@ -192,14 +192,14 @@ class BinaryExpr( Expression ): # creates a binary tree since the expressions ca
 			return left == right
 		if self.op == "!=":
 			return left != right
-    
-    def tipe(self):
-        if (self.op == "+" or self.op == "-" or self.op == "*" or self.op == "/"):
-            return "number"
-        elif (self.op == ">" or self.op == "<" or self.op = ">=" or self.op == "<=" or self.op = "==" or self.op == "!="):
-            return "boolean"
-        else:
-            return ValueError("Invalid operator")
+			
+	def tipe(self):
+		if (self.op == "+" or self.op == "-" or self.op == "*" or self.op == "/"):
+			return "number"
+		elif (self.op == ">" or self.op == "<" or self.op == ">=" or self.op == "<=" or self.op == "==" or self.op == "!="):
+			return "boolean"
+		else:
+			return ValueError("Invalid operator")
 
 class Number( Expression ):
 	def __init__(self, value):
@@ -211,8 +211,8 @@ class Number( Expression ):
 	def val(self, state):
 		return self.value
     
-    def tipe(self):
-        return "number"
+	def tipe(self):
+		return "number"
 
 class String( Expression ):
 	def __init__(self, string):
