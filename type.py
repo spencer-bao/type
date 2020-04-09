@@ -45,8 +45,12 @@ class Type_Map():
 
 	def __str__(self):
 		print_tm = ""
+		counter = 0
 		for i in self.tm:
-			print_tm += str(i) + " " + str(self.tm[i]) + "\n"
+			print_tm += str(i) + " " + str(self.tm[i])
+			if counter < len(self.tm) - 1:
+				print_tm += "\n"
+			counter += 1
 		return print_tm
 
 	def put(self, variable, value):
@@ -131,7 +135,7 @@ class WhileStatement( Statement ): #statement subclasses they create the string 
 	def tipe(self, type_map):
 		global error_message
 		if self.expr.tipe(type_map) == "boolean":
-			self.if_block.tipe(type_map)
+			self.block.tipe(type_map)
 			return type_map
 		else:
 			if error_message == "": #this checks if there was already an error in the expr and prints that message first
@@ -181,6 +185,8 @@ class AssignStatement( Statement ):
 	def tipe(self, type_map):
 		global error_message
 		expr_type = self.expr.tipe(type_map)
+		if error_message != "":
+			return type_map
 		if expr_type == "":
 			if error_message == "":
 				error_message = NameError("Name Error: Variable undefined!")
@@ -255,11 +261,11 @@ class BinaryExpr( Expression ): # creates a binary tree since the expressions ca
 		global error_message
 		# print(type_map)
 		if type_map.check_keys(self.left) == False and re.match(Lexer.number, str(self.left)) == False:
-			error_message = TypeError(str(self.left) + " is referenced before being defined!")
+			error_message = TypeError("Type Error: " + str(self.left) + " is referenced before being defined!")
 			return ""
 		# elif type_map.check_keys(self.right) == False and re.match(Lexer.number, str(self.right)) == False:
 		elif self.right.tipe(type_map) != "number" and self.right.tipe(type_map) != "boolean":
-			error_message = TypeError(str(self.right) + " is referenced before being defined!")
+			error_message = TypeError("Type Error: " + str(self.right) + " is referenced before being defined!")
 			return ""
 		elif self.left.tipe(type_map) != self.right.tipe(type_map):
 			return TypeError(str(self.left.tipe(type_map)) + self.op + str(self.right.tipe(type_map)))
