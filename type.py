@@ -36,7 +36,8 @@ def type( text ):
 			raise ValueError("Invalid Statement")
 
 	print(type_map)
-	print(error_message)
+	if error_message != "":
+		print(error_message)
 	return
 
 class Type_Map():
