@@ -134,7 +134,7 @@ class WhileStatement( Statement ): #statement subclasses they create the string 
 			self.if_block.tipe(type_map)
 			return type_map
 		else:
-			if error_message != "": #this checks if there was already an error in the expr and prints that message first
+			if error_message == "": #this checks if there was already an error in the expr and prints that message first
 				error_message = TypeError("Type Error: While statement does not include a boolean expression")
 			return type_map
 
@@ -163,7 +163,7 @@ class IfStatement( Statement ):
 				self.else_block.tipe(type_map)
 			return type_map
 		else:
-			if error_message != "":
+			if error_message == "":
 				error_message = TypeError("Type Error: If statement does not include a boolean expression")
 
 class AssignStatement( Statement ):
@@ -182,7 +182,8 @@ class AssignStatement( Statement ):
 		global error_message
 		expr_type = self.expr.tipe(type_map)
 		if expr_type == "":
-			error_message = NameError("Name Error: Variable undefined!")
+			if error_message == "":
+				error_message = NameError("Name Error: Variable undefined!")
 		if type_map.check_keys(str(self.identifier)) != True:
 			type_map.put(str(self.identifier), expr_type)
 			return type_map
@@ -256,7 +257,8 @@ class BinaryExpr( Expression ): # creates a binary tree since the expressions ca
 		if type_map.check_keys(self.left) == False and re.match(Lexer.number, str(self.left)) == False:
 			error_message = TypeError(str(self.left) + " is referenced before being defined!")
 			return ""
-		elif type_map.check_keys(self.right) == False and re.match(Lexer.number, str(self.right)) == False:
+		# elif type_map.check_keys(self.right) == False and re.match(Lexer.number, str(self.right)) == False:
+		elif self.right.tipe(type_map) != "number" and self.right.tipe(type_map) != "boolean":
 			error_message = TypeError(str(self.right) + " is referenced before being defined!")
 			return ""
 		elif self.left.tipe(type_map) != self.right.tipe(type_map):
