@@ -16,20 +16,27 @@ def type( text ):
 	statement_list = parseStmtList( tokens )
 
 	type_map = Type_Map()
-	for statement in statement_list:
-		if isinstance(statement, AssignStatement):
-			type_map.put(str(statement.identifier), "")
+	# for statement in statement_list:
+	# 	if isinstance(statement, AssignStatement):
+	# 		type_map.put(str(statement.identifier), "")
     
 	body = BlockStatement(statement_list)
-
+	
+	global error_message
+	error_message = ""
 	for stmt in body.stmtList:
+		if error_message != "":
+				break
 		if (isinstance(stmt, AssignStatement) or isinstance(stmt, WhileStatement) or
 			isinstance(stmt, IfStatement) or isinstance(stmt, BlockStatement)):
 			stmt.tipe(type_map)
+			
+
 		else:
 			raise ValueError("Invalid Statement")
 
 	print(type_map)
+	print(error_message)
 	return
 
 class Type_Map():
@@ -49,10 +56,10 @@ class Type_Map():
 		return self.tm[ident]
 
 	def check_keys(self, key):
-		if str(key) not in self.tm:
-			return False
-		else:
+		if str(key) in self.tm:
 			return True
+		else:
+			return False
 
 
 class State(): # a dictionary that holds variables which map to its state
@@ -122,7 +129,14 @@ class WhileStatement( Statement ): #statement subclasses they create the string 
 		return state
 
 	def tipe(self, type_map):
-		pass
+		global error_message
+		if self.expr.tipe(type_map) == "boolean":
+			self.if_block.tipe(type_map)
+			return type_map
+		else:
+			if error_message != "": #this checks if there was already an error in the expr and prints that message first
+				error_message = TypeError("Type Error: While statement does not include a boolean expression")
+			return type_map
 
 class IfStatement( Statement ):
 	def __init__(self, expr, if_block, else_block):
@@ -141,6 +155,17 @@ class IfStatement( Statement ):
 			self.else_block.meaning(state)
 		return state
 
+	def tipe(self, type_map):
+		global error_message
+		if self.expr.tipe(type_map) == "boolean":
+			self.if_block.tipe(type_map)
+			if self.else_block != "":
+				self.else_block.tipe(type_map)
+			return type_map
+		else:
+			if error_message != "":
+				error_message = TypeError("Type Error: If statement does not include a boolean expression")
+
 class AssignStatement( Statement ):
 	def __init__(self, identifier, expr):
 		self.identifier = identifier
@@ -154,14 +179,17 @@ class AssignStatement( Statement ):
 		return state
 
 	def tipe(self, type_map):
+		global error_message
 		expr_type = self.expr.tipe(type_map)
 		if expr_type == "":
-			NameError("Variable undefined!")
-		if type_map.check_keys(self.identifier):
+			error_message = NameError("Name Error: Variable undefined!")
+		if type_map.check_keys(str(self.identifier)) != True:
 			type_map.put(str(self.identifier), expr_type)
 			return type_map
 		elif type_map.val(str(self.identifier)) != expr_type:
-			TypeError("Type mismatch!")
+			error_message = TypeError("Type Error: " + self.identifier.tipe(type_map) + " = " + self.expr.tipe(type_map) + "!")
+			
+			
 
 class BlockStatement( Statement ):
 	def __init__(self, stmtList):
@@ -177,6 +205,11 @@ class BlockStatement( Statement ):
 		for stmt in self.stmtList:
 			stmt.meaning(state)
 		return state
+	
+	def tipe(self, type_map):
+		for stmt in self.stmtList:
+			stmt.tipe(type_map)
+			return type_map
 		
 
 #  Expression class and its subclasses
@@ -217,13 +250,23 @@ class BinaryExpr( Expression ): # creates a binary tree since the expressions ca
 		if self.op == "!=":
 			return left != right
 			
-	def tipe(self, type_map):
-		if (self.op == "+" or self.op == "-" or self.op == "*" or self.op == "/"):
+	def tipe(self, type_map): #check type validity and return the type.
+		global error_message
+		# print(type_map)
+		if type_map.check_keys(self.left) == False and re.match(Lexer.number, str(self.left)) == False:
+			error_message = TypeError(str(self.left) + " is referenced before being defined!")
+			return ""
+		elif type_map.check_keys(self.right) == False and re.match(Lexer.number, str(self.right)) == False:
+			error_message = TypeError(str(self.right) + " is referenced before being defined!")
+			return ""
+		elif self.left.tipe(type_map) != self.right.tipe(type_map):
+			return TypeError(str(self.left.tipe(type_map)) + self.op + str(self.right.tipe(type_map)))
+		elif (self.op == "+" or self.op == "-" or self.op == "*" or self.op == "/"):
 			return "number"
 		elif (self.op == ">" or self.op == "<" or self.op == ">=" or self.op == "<=" or self.op == "==" or self.op == "!="):
 			return "boolean"
 		else:
-			return ValueError("Invalid operator")
+			error_message = ValueError("Invalid operator")
 
 class Number( Expression ):
 	def __init__(self, value):
