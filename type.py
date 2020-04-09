@@ -10,12 +10,12 @@ tokens = [ ]
 statement_list = []
 
 
-def type(text):
+def type( text ):
 	global tokens
 	tokens = Lexer( text )
 	statement_list = parseStmtList( tokens )
 
-	type_map = State()
+	type_map = Type_Map()
 	for statement in statement_list:
 		if isinstance(statement, AssignStatement):
 			type_map.put(str(statement.identifier), "")
@@ -29,7 +29,30 @@ def type(text):
 		else:
 			raise ValueError("Invalid Statement")
 
+	print(type_map)
+	return
 
+class Type_Map():
+	def __init__(self):
+		self.tm = {}
+
+	def __str__(self):
+		print_tm = ""
+		for i in self.tm:
+			print_tm += str(i) + " " + str(self.tm[i]) + "\n"
+		return print_tm
+
+	def put(self, variable, value):
+		self.tm[variable] = value
+
+	def val(self, ident):
+		return self.tm[ident]
+
+	def check_keys(self, key):
+		if str(key) not in self.tm:
+			return False
+		else:
+			return True
 
 
 class State(): # a dictionary that holds variables which map to its state
@@ -43,7 +66,7 @@ class State(): # a dictionary that holds variables which map to its state
 		print_state = "{"
 		comma_counter = 0
 		for variable in self.state:
-			print_state += ("<" + variable + ", " + self.state[variable] + ">")
+			print_state += ("<" + str(variable) + ", " + str(self.state[variable]) + ">")
 			if comma_counter != len(self.state) - 1:
 				print_state += ", "
 				comma_counter += 1
@@ -131,12 +154,13 @@ class AssignStatement( Statement ):
 		return state
 
 	def tipe(self, type_map):
-		expr_type = self.expr.tipe()
+		expr_type = self.expr.tipe(type_map)
 		if expr_type == "":
 			NameError("Variable undefined!")
-		if self.identifier not in type_map:
-			type_map[self.identifier] = expr_type
-		elif type_map[self.identifier] != expr_type:
+		if type_map.check_keys(self.identifier):
+			type_map.put(str(self.identifier), expr_type)
+			return type_map
+		elif type_map.val(str(self.identifier)) != expr_type:
 			TypeError("Type mismatch!")
 
 class BlockStatement( Statement ):
@@ -193,7 +217,7 @@ class BinaryExpr( Expression ): # creates a binary tree since the expressions ca
 		if self.op == "!=":
 			return left != right
 			
-	def tipe(self):
+	def tipe(self, type_map):
 		if (self.op == "+" or self.op == "-" or self.op == "*" or self.op == "/"):
 			return "number"
 		elif (self.op == ">" or self.op == "<" or self.op == ">=" or self.op == "<=" or self.op == "==" or self.op == "!="):
@@ -211,7 +235,7 @@ class Number( Expression ):
 	def val(self, state):
 		return self.value
     
-	def tipe(self):
+	def tipe(self, type_map):
 		return "number"
 
 class String( Expression ):
@@ -230,6 +254,12 @@ class VarRef( Expression ):
 
 	def val(self, state):
 		return state.val(self.identifier)
+
+	def tipe(self, type_map):
+		if type_map.check_keys(self.identifier):
+			return type_map.val(str(self.identifier))
+		else:
+			return NameError("Variable undefined!")
 
 def error( msg ):
 	sys.exit(msg)
@@ -550,7 +580,8 @@ def main():
 		print ("Usage:  %s filename" % sys.argv[0])
 		return
 	#parse("".join(mklines(sys.argv[1+ct])))
-	meaning("".join(mklines(sys.argv[1+ct])))
+	#meaning("".join(mklines(sys.argv[1+ct])))
+	type("".join(mklines(sys.argv[1+ct])))
 	return
 
 
